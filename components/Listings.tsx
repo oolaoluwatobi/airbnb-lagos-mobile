@@ -16,16 +16,21 @@ import { Listing } from "@/types/types";
 import Colors from "@/constants/Colors";
 
 import Animated, { FadeInRight, FadeOutLeft } from "react-native-reanimated";
+import {
+  BottomSheetFlatList,
+  BottomSheetFlatListMethods,
+} from "@gorhom/bottom-sheet";
 
 interface Props {
   listings: Listing[];
   category: string;
+  refresh?: number;
 }
 
-const Listings = ({ listings, category }: Props) => {
+const Listings = ({ listings, category, refresh }: Props) => {
   const [data, setData] = useState<Listing[] | null>(null);
   const [loading, setLoading] = useState(true);
-  const listRef = useRef<FlatList<Listing>>(null);
+  const listRef = useRef<BottomSheetFlatListMethods>(null);
 
   useEffect(() => {
     // console.log(category, listings.slice(0, 600).length, "listings");
@@ -36,9 +41,11 @@ const Listings = ({ listings, category }: Props) => {
     }, 200);
   }, [category]);
 
-  // console.log(data, "listings___listings.tsx 38");
-
-  // console.log(data, "listingsData___listings.tsx 39");
+  useEffect(() => {
+    if (refresh) {
+      listRef.current?.scrollToOffset({ animated: true, offset: 0 });
+    }
+  }, [refresh]);
 
   const renderRow: ListRenderItem<Listing> = ({ item }) =>
     data && (
@@ -85,11 +92,14 @@ const Listings = ({ listings, category }: Props) => {
 
   return (
     <View style={defaultStyles.container}>
-      <FlatList
+      <BottomSheetFlatList
         ref={listRef}
         data={data}
         keyExtractor={(item) => item.id.toString()}
         renderItem={renderRow}
+        ListHeaderComponent={
+          <Text style={styles.info}>{data?.length} Homes</Text>
+        }
       />
     </View>
   );
@@ -104,6 +114,12 @@ const styles = StyleSheet.create({
     width: "100%",
     height: 300,
     borderRadius: 10,
+  },
+  info: {
+    textAlign: "center",
+    fontSize: 16,
+    marginTop: 10,
+    fontFamily: "mon-sb",
   },
 });
 
