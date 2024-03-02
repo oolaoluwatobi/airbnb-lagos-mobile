@@ -117,7 +117,8 @@ const ExploreHeader = ({ onCategoryChange }: ExploreHeaderProps) => {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: "#000" }}>
+    // <SafeAreaView style={{ flex: 1 }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: Colors.primary }}>
       <View style={styles.container}>
         <View style={styles.actionRow}>
           <Link href={"/(modals)/bookings"} asChild>

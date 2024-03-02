@@ -14,6 +14,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { defaultStyles } from "@/constants/Styles";
 import Colors from "@/constants/Colors";
+import * as ImagePicker from "expo-image-picker";
 
 const Page = () => {
   const { signOut, isSignedIn } = useAuth();
@@ -49,7 +50,31 @@ const Page = () => {
     }
   };
 
-  const onCaptureImage = async () => {};
+  const onCaptureImage = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+    if (status !== "granted") {
+      alert("Sorry, we need camera roll permissions to make this work!");
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 1,
+      base64: true,
+    });
+
+    if (!result.canceled) {
+      const base64 = `data:image/jpg;base64,${result.assets[0].base64}`;
+      user?.setProfileImage({ file: base64 });
+      // setImageUri(result.uri);
+      // await user?.update({
+      //   imageUrl: result.uri,
+      // });
+    }
+  };
 
   return (
     <SafeAreaView style={defaultStyles.container}>
