@@ -5,6 +5,7 @@ import {
   TouchableOpacity,
   TextInput,
   ScrollView,
+  Image,
 } from "react-native";
 import React, { useState } from "react";
 import { BlurView } from "expo-blur";
@@ -15,17 +16,46 @@ import Colors from "@/constants/Colors";
 import { Ionicons } from "@expo/vector-icons";
 import { places } from "@/assets/data/places";
 
+import DatePicker from "react-native-modern-datepicker";
+
 const AnimatedTouchableOpacity =
   Animated.createAnimatedComponent(TouchableOpacity);
+
+const guestsGropus = [
+  {
+    name: "Adults",
+    text: "Ages 13 or above",
+    count: 0,
+  },
+  {
+    name: "Children",
+    text: "Ages 2-12",
+    count: 0,
+  },
+  {
+    name: "Infants",
+    text: "Under 2",
+    count: 0,
+  },
+  {
+    name: "Pets",
+    text: "Pets allowed",
+    count: 0,
+  },
+];
 
 const bookings = () => {
   const router = useRouter();
   const [openCard, setOpenCard] = useState(0);
+  const [groups, setGroups] = useState(guestsGropus);
+
   const [selectedPlace, setSelectedPlace] = useState(0);
+  const today = new Date().toISOString().substring(0, 10);
 
   const onClearAll = () => {
     setSelectedPlace(0);
     setOpenCard(0);
+    setGroups(guestsGropus);
   };
 
   return (
@@ -57,23 +87,33 @@ const bookings = () => {
                 />
               </View>
 
-              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                // contentContainerStyle={{ gap: 25 }}
+              >
                 {places.map((place, index) => (
                   <TouchableOpacity
                     key={index}
                     onPress={() => setSelectedPlace(index)}
-                    style={{
-                      padding: 10,
-                      margin: 10,
-                      borderRadius: 10,
-                      backgroundColor:
-                        selectedPlace == index ? Colors.primary : "white",
-                    }}
+                    style={{ marginRight: 20 }}
                   >
+                    <Image
+                      source={place.img}
+                      style={
+                        selectedPlace === index
+                          ? styles.placeSelected
+                          : styles.place
+                      }
+                    />
                     <Text
                       style={{
-                        fontFamily: "mon-sb",
-                        color: selectedPlace == index ? "white" : Colors.dark,
+                        fontFamily: selectedPlace === index ? "mon-sb" : "mon",
+                        fontSize: 12,
+                        color:
+                          selectedPlace === index ? Colors.dark : Colors.grey,
+                        textAlign: "left",
+                        marginTop: 4,
                       }}
                     >
                       {place.title}
@@ -99,11 +139,28 @@ const bookings = () => {
         )}
 
         {openCard == 1 && (
-          <Animated.View>
-            <Animated.Text entering={FadeIn} style={styles.cardHeader}>
-              When is your trip?
-            </Animated.Text>
-          </Animated.View>
+          <>
+            <Animated.View>
+              <Animated.Text entering={FadeIn} style={styles.cardHeader}>
+                When is your trip?
+              </Animated.Text>
+            </Animated.View>
+
+            <Animated.View style={styles.cardBody}>
+              <DatePicker
+                current={today}
+                selected={today}
+                mode="calendar"
+                options={{
+                  defaultFont: "mon",
+                  headerFont: "mon-sb",
+                  selectedTextColor: "white",
+                  borderColor: "transparent",
+                  mainColor: Colors.primary,
+                }}
+              />
+            </Animated.View>
+          </>
         )}
       </View>
 
@@ -114,17 +171,95 @@ const bookings = () => {
             onPress={() => setOpenCard(2)}
             style={styles.cardPreview}
           >
-            <Text style={styles.previewText}>Who&apos;s coming?</Text>
+            <Text style={styles.previewText}>Who</Text>
             <Text style={styles.previewDate}>Any guests</Text>
           </AnimatedTouchableOpacity>
         )}
 
         {openCard == 2 && (
-          <Animated.View>
-            <Animated.Text entering={FadeIn} style={styles.cardHeader}>
-              Who?
-            </Animated.Text>
-          </Animated.View>
+          <>
+            <Animated.View>
+              <Animated.Text entering={FadeIn} style={styles.cardHeader}>
+                Who&apos;s coming?
+              </Animated.Text>
+            </Animated.View>
+
+            <Animated.View style={styles.cardBody}>
+              {groups.map((group, index) => (
+                <View
+                  key={index}
+                  style={[
+                    styles.guestItems,
+                    index + 1 < groups.length ? styles.itemBorder : null,
+                  ]}
+                >
+                  <View>
+                    <Text style={{ fontFamily: "mon-sb", fontSize: 14 }}>
+                      {group.name}
+                    </Text>
+                    <Text
+                      style={{
+                        fontFamily: "mon",
+                        fontSize: 14,
+                        color: Colors.grey,
+                      }}
+                    >
+                      {group.text}
+                    </Text>
+                  </View>
+
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      gap: 10,
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <TouchableOpacity
+                      onPress={() => {
+                        const newGroups = [...groups];
+                        newGroups[index].count = Math.max(
+                          0,
+                          newGroups[index].count - 1
+                        );
+                        setGroups(newGroups);
+                      }}
+                    >
+                      <Ionicons
+                        name="remove-circle-outline"
+                        size={26}
+                        color={group.count > 0 ? Colors.grey : "#cdcdcd"}
+                      />
+                    </TouchableOpacity>
+                    <Text
+                      style={{
+                        fontFamily: "mon",
+                        fontSize: 16,
+                        minWidth: 18,
+                        textAlign: "center",
+                      }}
+                    >
+                      {group.count}
+                    </Text>
+                    <TouchableOpacity
+                      onPress={() => {
+                        const newGroups = [...groups];
+                        newGroups[index].count = newGroups[index].count + 1;
+                        setGroups(newGroups);
+                      }}
+                    >
+                      <Ionicons
+                        name="add-circle-outline"
+                        size={26}
+                        color={Colors.grey}
+                      />
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              ))}
+            </Animated.View>
+          </>
         )}
       </View>
 
@@ -211,7 +346,7 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   cardBody: {
-    paddingHorizontal: 20,
+    paddingLeft: 20,
     paddingBottom: 20,
   },
   searchSection: {
@@ -223,7 +358,8 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     alignItems: "center",
     alignContent: "center",
-    marginBottom: 16,
+    marginBottom: 20,
+    marginRight: 20,
   },
   inputField: {
     flex: 1,
@@ -232,6 +368,28 @@ const styles = StyleSheet.create({
   },
   searchIcon: {
     padding: 10,
+  },
+  place: {
+    width: 120,
+    height: 120,
+    borderRadius: 10,
+  },
+  placeSelected: {
+    width: 120,
+    height: 120,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: Colors.grey,
+  },
+  guestItems: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: 16,
+  },
+  itemBorder: {
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: Colors.grey,
   },
 });
 
