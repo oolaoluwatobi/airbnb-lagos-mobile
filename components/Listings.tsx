@@ -11,8 +11,8 @@ import React, { useEffect, useRef, useState } from "react";
 import { defaultStyles } from "@/constants/Styles";
 import { Link } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { getListings } from "@/actions/getLIstings";
-import { Listing } from "@/types/types";
+import { getListings } from "@/actions/api";
+import { Listing, User } from "@/types/types";
 import Colors from "@/constants/Colors";
 
 import Animated, { FadeInRight, FadeOutLeft } from "react-native-reanimated";
@@ -20,26 +20,35 @@ import {
   BottomSheetFlatList,
   BottomSheetFlatListMethods,
 } from "@gorhom/bottom-sheet";
+import { useUser } from "@clerk/clerk-expo";
+import useFavorite from "@/app/Hooks/useFavorite";
+import { HeartButton } from "@/app/listing/components/HeartButton";
 
 interface Props {
-  listings: Listing[];
+  listings: Listing[] | undefined;
+  currentUser?: User | undefined;
   category: string;
   refresh?: number;
 }
 
-const Listings = ({ listings, category, refresh }: Props) => {
+const Listings = ({ listings, category, refresh, currentUser }: Props) => {
   const [data, setData] = useState<Listing[] | null>(null);
   const [loading, setLoading] = useState(true);
   const listRef = useRef<BottomSheetFlatListMethods>(null);
+  const { user } = useUser();
 
-  useEffect(() => {
-    // console.log(category, listings.slice(0, 600).length, "listings");
-    getListings().then(setData);
+  // useEffect(() => {
+  //   // console.log(category, listings.slice(0, 600).length, "listings");
+  //   getListings().then(setData);
 
-    setTimeout(() => {
-      setLoading(false);
-    }, 200);
-  }, [category]);
+  //   setTimeout(() => {
+  //     setLoading(false);
+  //   }, 200);
+  // }, [category]);
+
+  const onWishList = (listingId: string) => {
+    return currentUser?.favoriteIds.includes(listingId as string);
+  };
 
   useEffect(() => {
     if (refresh) {
@@ -48,7 +57,7 @@ const Listings = ({ listings, category, refresh }: Props) => {
   }, [refresh]);
 
   const renderRow: ListRenderItem<Listing> = ({ item }) =>
-    data && (
+    Array(listings) && (
       <Link href={`/listing/${item.id}`} asChild>
         <TouchableOpacity>
           <Animated.View
@@ -62,16 +71,32 @@ const Listings = ({ listings, category, refresh }: Props) => {
               }}
               style={styles.image}
             />
-            <TouchableOpacity
-              style={{ position: "absolute", right: 30, top: 30 }}
-            >
-              <Ionicons name="heart-outline" size={24} color={"#fff"} />
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={{ position: "absolute", right: 32, top: 32 }}
-            >
-              <Ionicons name="heart" size={20} color={"red"} />
-            </TouchableOpacity>
+
+            <HeartButton listingId={item.id} currentUser={currentUser} />
+
+            {/* {onWishList(item.id) ? (
+              <>
+                <TouchableOpacity
+                  style={{ position: "absolute", right: 32, top: 32 }}
+                  // onPress={() => console.log("pressed___True")}
+                >
+                  <Ionicons name="heart" size={24} color={"red"} />
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={{ position: "absolute", right: 30, top: 30 }}
+                  onPress={() => console.log("pressed___True")}
+                >
+                  <Ionicons name="heart-outline" size={28} color={"#fff"} />
+                </TouchableOpacity>
+              </>
+            ) : (
+              <TouchableOpacity
+                style={{ position: "absolute", right: 30, top: 30 }}
+                onPress={() => console.log("pressed___False")}
+              >
+                <Ionicons name="heart-outline" size={28} color={"#fff"} />
+              </TouchableOpacity>
+            )} */}
 
             <View style={{ flexDirection: "column", gap: 4, marginTop: 10 }}>
               <Text style={{ fontSize: 18 }}>
@@ -94,11 +119,11 @@ const Listings = ({ listings, category, refresh }: Props) => {
     <View style={defaultStyles.container}>
       <BottomSheetFlatList
         ref={listRef}
-        data={data}
+        data={listings}
         keyExtractor={(item) => item.id.toString()}
         renderItem={renderRow}
         ListHeaderComponent={
-          <Text style={styles.info}>{data?.length} Homes</Text>
+          <Text style={styles.info}>{listings?.length} Homes</Text>
         }
       />
     </View>

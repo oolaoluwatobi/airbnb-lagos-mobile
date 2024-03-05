@@ -1,6 +1,6 @@
 import { View, Text, StyleSheet } from "react-native";
 import React, { useMemo, useRef, useState } from "react";
-import { Listing } from "@/types/types";
+import { Listing, User } from "@/types/types";
 // import BottomSheet, { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 import Listings from "./Listings";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
@@ -9,14 +9,21 @@ import BottomSheet, { TouchableOpacity } from "@gorhom/bottom-sheet";
 import { Ionicons } from "@expo/vector-icons";
 
 interface Props {
-  listings: any[];
+  listings: Listing[] | undefined;
+  currentUser?: User | undefined;
   category: string;
 }
 
-export default function ListingsBottomSheet({ listings, category }: Props) {
+export default function ListingsBottomSheet({
+  listings,
+  currentUser,
+  category,
+}: Props) {
   const snapPoints = useMemo(() => ["10%", "100%"], []);
   const bottomSheetRef = useRef<BottomSheet>(null);
   const [refresh, setRefresh] = useState<number>(0);
+
+  console.log(listings, "LISTINGS______BOTTOM_SHEET");
 
   const onShowMap = () => {
     bottomSheetRef.current?.collapse();
@@ -41,7 +48,12 @@ export default function ListingsBottomSheet({ listings, category }: Props) {
       handleIndicatorStyle={{ backgroundColor: Colors.grey }}
     >
       <View style={styles.contentContainer}>
-        <Listings listings={listings} refresh={refresh} category={category} />
+        <Listings
+          listings={listings}
+          currentUser={currentUser}
+          refresh={refresh}
+          category={category}
+        />
         <View style={styles.absoluteView}>
           <TouchableOpacity onPress={onShowMap} style={styles.btn}>
             <Text style={{ fontFamily: "mon-sb", color: "#fff" }}>Map</Text>

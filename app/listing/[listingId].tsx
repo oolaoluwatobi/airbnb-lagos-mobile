@@ -9,7 +9,7 @@ import {
   TouchableOpacity,
   Share,
 } from "react-native";
-// import listingsData from "@/assets/data/airbnb-listings.json";
+// import listingsData from "@/assets/data/.listingairbnb-listings.json";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import Colors from "@/constants/Colors";
 import Animated, {
@@ -22,35 +22,52 @@ import Animated, {
 import { defaultStyles } from "@/constants/Styles";
 
 import { Listing } from "@/types/types";
-import { getListings } from "@/actions/getLIstings";
+import { getListingById, getListings } from "@/actions/api";
 import { categories } from "@/components/ExploreHeader";
+import { useQuery } from "@tanstack/react-query";
+import { useUser } from "@clerk/clerk-expo";
 
 const IMG_HEIGHT = 300;
 const { width } = Dimensions.get("window");
 
 const Page = () => {
   const { listingId } = useLocalSearchParams();
-  const [data, setData] = useState<Listing[] | null>(null);
-  const [loading, setLoading] = useState(true);
-  // const listRef = useRef<FlatList<Listing>>(null);
+  const { user } = useUser();
+  console.log(listingId, user?.externalId!, "[listingId.tsx] 35");
+
   const navigation = useNavigation();
   const scrollRef = useAnimatedRef<Animated.ScrollView>();
 
-  const listing = data?.find((item) => item.id === listingId);
+  const singleListingQuery = useQuery({
+    queryKey: ["singleListing"],
+    queryFn: () =>
+      getListingById({
+        listingId,
+        userId: user?.emailAddresses[0].emailAddress,
+      }),
+  });
+
   const scrollOffset = useScrollViewOffset(scrollRef);
 
-  useEffect(() => {
-    // console.log(category, listings.slice(0, 600).length, "listings");
-    getListings().then(setData);
+  const onWishList = singleListingQuery.data?.listing.user.favoriteIds.includes(
+    listingId as string
+  );
 
-    setLoading(false);
-  }, []);
+  // const onWishList = singleListingQuery.data?.currentUser.favoriteIds.includes(
+  //   listingId as string
+  // );
 
+  console.log(
+    listingId,
+    singleListingQuery.data?.listing.user.favoriteIds,
+    onWishList,
+    "[listingId.tsx] 46"
+  );
   const shareListing = async () => {
     try {
       await Share.share({
-        title: listing?.title,
-        url: `https://airbnb-lagos.vercel.app/listings/${listing?.id}`,
+        title: singleListingQuery.data?.listing.title,
+        url: `https://airbnb-lagos.vercel.app/listings/${singleListingQuery.data?.listing.id}`,
       });
     } catch (err) {
       console.log(err);
@@ -72,9 +89,21 @@ const Page = () => {
           <TouchableOpacity style={styles.roundButton} onPress={shareListing}>
             <Ionicons name="share-outline" size={22} color={"#000"} />
           </TouchableOpacity>
-          <TouchableOpacity style={styles.roundButton}>
-            <Ionicons name="heart-outline" size={22} color={"#000"} />
-          </TouchableOpacity>
+          {onWishList ? (
+            <TouchableOpacity
+              style={styles.roundButton}
+              onPress={() => console.log("remove from wishlist")}
+            >
+              <Ionicons name="heart" size={22} color={Colors.primary} />
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity
+              style={styles.roundButton}
+              onPress={() => console.log("add to wishlist")}
+            >
+              <Ionicons name="heart-outline" size={22} color={"#000"} />
+            </TouchableOpacity>
+          )}
         </View>
       ),
       headerLeft: () => (
@@ -115,13 +144,13 @@ const Page = () => {
     };
   }, []);
 
-  let dateStr = listing?.createdAt; // ISO 8601 date string
+  let dateStr = singleListingQuery.data?.listing.createdAt; // ISO 8601 date string
   let dateObj = new Date(dateStr!);
 
   let formattedDate = dateObj.toLocaleDateString(); // "MM/DD/YYYY" format for US locale
 
   const getCategoryIcon = (params: string) => {
-    if (listing?.category === params) {
+    if (singleListingQuery.data?.listing.category === params) {
       const icon = categories.find((item) => item.label === params);
       console.log(icon, "[listingId.tsx] 127");
       return icon;
@@ -136,34 +165,49 @@ const Page = () => {
         scrollEventThrottle={16}
       >
         <Animated.Image
-          source={{ uri: listing?.imageSrc }}
+          source={{ uri: singleListingQuery.data?.listing.imageSrc }}
           style={[styles.image, imageAnimatedStyle]}
           resizeMode="cover"
         />
 
         <View style={styles.infoContainer}>
-          <Text style={styles.name}>{listing?.title}</Text>
+          <Text style={styles.name}>
+            {singleListingQuery.data?.listing.title}
+          </Text>
           <Text style={styles.location}>
-            Located in {listing?.locationValue}
+            Located in {singleListingQuery.data?.listing.locationValue}
           </Text>
           <Text style={styles.rooms}>
-            {listing?.guestCount} guests · {listing?.bathroomCount} bedrooms ·{" "}
-            {listing?.bathroomCount} bathrooms
+            {singleListingQuery.data?.listing.guestCount} guests ·{" "}
+            {singleListingQuery.data?.listing.bathroomCount} bedrooms ·{" "}
+            {singleListingQuery.data?.listing.bathroomCount} bathrooms
           </Text>
           {/* <View style={{ flexDirection: "row", gap: 4 }}>
             <Ionicons name="star" size={16} />
             <Text style={styles.ratings}>
-              {listing?.category} · {listing?.price} reviews
+              {singleListingQuery.data?.listing.category} · {singleListingQuery.data?.listing.price} reviews
             </Text>
           </View> */}
           <View style={styles.divider} />
 
           <View style={styles.hostView}>
-            <Image source={{ uri: listing?.imageSrc }} style={styles.host} />
+            {singleListingQuery.data?.listing.user.image ? (
+              <Image
+                source={{ uri: singleListingQuery.data?.listing.user.image }}
+                style={styles.host}
+              />
+            ) : (
+              <Ionicons
+                name="person-circle"
+                // style={styles.host}
+                size={50}
+                color={Colors.grey}
+              />
+            )}
 
             <View>
               <Text style={{ fontWeight: "500", fontSize: 16 }}>
-                Hosted by {listing?.userId}
+                Hosted by {singleListingQuery.data?.listing.user.name}
               </Text>
               <Text>Hosted since {formattedDate}</Text>
             </View>
@@ -173,8 +217,11 @@ const Page = () => {
 
           <View style={{ flexDirection: "row", gap: 8 }}>
             <MaterialCommunityIcons
-              name={getCategoryIcon(listing?.category!)?.icon as any}
-              // name={listing?.category as any}
+              name={
+                getCategoryIcon(singleListingQuery.data?.listing.category!)
+                  ?.icon as any
+              }
+              // name={singleListingQuery.data?.listing.category as any}
               size={24}
               color={Colors.grey}
             />
@@ -186,7 +233,10 @@ const Page = () => {
                   color: "#000",
                 }}
               >
-                {getCategoryIcon(listing?.category!)?.label as string}
+                {
+                  getCategoryIcon(singleListingQuery.data?.listing.category!)
+                    ?.label as string
+                }
               </Text>
               <Text
                 style={{
@@ -195,14 +245,19 @@ const Page = () => {
                   color: Colors.grey,
                 }}
               >
-                {getCategoryIcon(listing?.category!)?.description as string}
+                {
+                  getCategoryIcon(singleListingQuery.data?.listing.category!)
+                    ?.description as string
+                }
               </Text>
             </View>
           </View>
 
           <View style={styles.divider} />
 
-          <Text style={styles.description}>{listing?.description}</Text>
+          <Text style={styles.description}>
+            {singleListingQuery.data?.listing.description}
+          </Text>
         </View>
       </Animated.ScrollView>
 
@@ -218,7 +273,9 @@ const Page = () => {
           }}
         >
           <TouchableOpacity style={styles.footerText}>
-            <Text style={styles.footerPrice}>€{listing?.price}</Text>
+            <Text style={styles.footerPrice}>
+              €{singleListingQuery.data?.listing.price}
+            </Text>
             <Text>night</Text>
           </TouchableOpacity>
 

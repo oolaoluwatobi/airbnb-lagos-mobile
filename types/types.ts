@@ -37,3 +37,15 @@ export interface Coordinates {
   lat: number;
   lon: number;
 }
+
+export interface User {
+  id: string;
+  name: string;
+  email: string;
+  emailVerified?: any;
+  image: string;
+  hashedPassword?: any;
+  createdAt: string;
+  updatedAt: string;
+  favoriteIds: string[];
+}

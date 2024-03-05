@@ -17,14 +17,14 @@ import Colors from "@/constants/Colors";
 import * as ImagePicker from "expo-image-picker";
 
 const Page = () => {
-  const { signOut, isSignedIn } = useAuth();
+  const { signOut, isSignedIn, getToken } = useAuth();
   const { user } = useUser();
 
   const [firstName, setFirstName] = useState(user?.firstName);
   const [lastName, setLastName] = useState(user?.lastName);
   const [email, setEmail] = useState(user?.emailAddresses[0].emailAddress);
   const [edit, setEdit] = useState(false);
-  const [imageUri, setImageUri] = useState("");
+  const [token, setToken] = useState("");
 
   useEffect(() => {
     if (!user) return;
@@ -32,8 +32,20 @@ const Page = () => {
     setFirstName(user?.firstName);
     setLastName(user?.lastName);
     setEmail(user?.emailAddresses[0].emailAddress);
-    setImageUri(user?.imageUrl);
+
+    const onGetToken = async () => {
+      try {
+        const token = await getToken();
+        if (token) setToken(token);
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
+    onGetToken();
   }, [user]);
+
+  console.log(token, "TOKEN_____PROFILE.tsx 46");
 
   const onSaveUser = async () => {
     try {

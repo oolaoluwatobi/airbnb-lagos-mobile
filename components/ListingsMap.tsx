@@ -4,13 +4,13 @@ import { Marker, PROVIDER_GOOGLE } from "react-native-maps";
 import MapView from "react-native-map-clustering";
 import { getItem } from "expo-secure-store";
 import { Listing } from "@/types/types";
-import { getListings } from "@/actions/getLIstings";
+import { getListings } from "@/actions/api";
 import { router } from "expo-router";
 import Colors from "@/constants/Colors";
 import { defaultStyles } from "@/constants/Styles";
 
 interface Props {
-  listings: any[];
+  listings: Listing[] | undefined;
 }
 
 let coordinates = [
@@ -64,7 +64,7 @@ const ListingsMap = memo(({ listings }: Props) => {
           longitudeDelta: 0.421,
         }}
       >
-        {listings.map((listing: Listing, i) => {
+        {listings?.map((listing: Listing, i) => {
           return (
             <Marker
               key={listing?.id}

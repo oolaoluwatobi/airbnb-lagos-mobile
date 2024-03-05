@@ -1,5 +1,5 @@
 import { useFonts } from "expo-font";
-import { Stack, useRouter } from "expo-router";
+import { Stack, useRouter, useSegments } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { useEffect } from "react";
 
@@ -9,12 +9,12 @@ import * as SecureStore from "expo-secure-store";
 import { ClerkProvider, useAuth } from "@clerk/clerk-expo";
 import ModalHeaderText from "@/components/ModalHeaderText";
 import Colors from "@/constants/Colors";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 const CLERK_PUBLISHABLE_KEY = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY;
 
-// if (!CLERK_PUBLISHABLE_KEY) {
-//   throw new Error("Missing CLERK_PUBLISHABLE_KEY");
-// }
+// Create a client
+const queryClient = new QueryClient();
 
 const tokenCache = {
   async getToken(key: string) {
@@ -78,69 +78,70 @@ export default function RootLayout() {
   );
 }
 
-function RootLayoutNav() {
+function RootLayoutNav(): JSX.Element {
   const router = useRouter();
   const { isLoaded, isSignedIn } = useAuth();
+  const segments: string[] = useSegments();
 
   useEffect(() => {
     if (isLoaded && !isSignedIn) {
       router.push("/(modals)/login");
     }
 
-    // if (isLoaded) {
-    //   if (isSignedIn) {
-    //     tokenCache.setToken("clerk:session_token", CLERK_PUBLISHABLE_KEY)
-    //   } else {
-    //     tokenCache.setToken("clerk:session_token", "")
-    //   }
+    // const inTabGroup = segments.includes("(tabs)"!);
+    // const inModalGroup = segments.includes("(modals)"!);
+    // if (isSignedIn && !inTabGroup) {
+    //   router.push("/(modals)/login");
     // }
   }, [isLoaded, isSignedIn]);
 
   return (
-    <Stack>
-      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-      <Stack.Screen
-        name="(modals)/login"
-        options={{
-          title: "Login or sign up",
-          presentation: "modal",
-          headerTitleStyle: {
-            fontFamily: "mon-sb",
-          },
-          headerLeft: () => (
-            <TouchableOpacity onPress={() => router.back()}>
-              <Ionicons name="close-outline" size={28} />
-            </TouchableOpacity>
-          ),
-        }}
-      />
-      <Stack.Screen
-        name="listing/[listingId]"
-        options={{ title: "", headerTransparent: true }}
-      />
-      <Stack.Screen
-        name="(modals)/bookings"
-        options={{
-          presentation: "transparentModal",
-          animation: "fade",
-          headerTransparent: true,
-          headerTitle: () => <ModalHeaderText />,
-          headerLeft: () => (
-            <TouchableOpacity
-              onPress={() => router.back()}
-              style={{
-                backgroundColor: "#fff",
-                borderColor: Colors.grey,
-                borderRadius: 20,
-                borderWidth: 1,
-                padding: 4,
-              }}
-            >
-              <Ionicons name="close-outline" size={22} />
-            </TouchableOpacity>
-          ),
-        }}
-      />
-    </Stack>
+    <QueryClientProvider client={queryClient}>
+      <Stack>
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen
+          name="(modals)/login"
+          options={{
+            title: "Login or sign up",
+            presentation: "modal",
+            headerTitleStyle: {
+              fontFamily: "mon-sb",
+            },
+            headerLeft: () => (
+              <TouchableOpacity onPress={() => router.back()}>
+                <Ionicons name="close-outline" size={28} />
+              </TouchableOpacity>
+            ),
+          }}
+        />
+        <Stack.Screen
+          name="listing/[listingId]"
+          options={{ title: "", headerTransparent: true }}
+        />
+        <Stack.Screen
+          name="(modals)/bookings"
+          options={{
+            presentation: "transparentModal",
+            animation: "fade",
+            headerTransparent: true,
+            headerTitle: () => <ModalHeaderText />,
+            headerLeft: () => (
+              <TouchableOpacity
+                onPress={() => router.back()}
+                style={{
+                  backgroundColor: "#fff",
+                  borderColor: Colors.grey,
+                  borderRadius: 20,
+                  borderWidth: 1,
+                  padding: 4,
+                }}
+              >
+                <Ionicons name="close-outline" size={22} />
+              </TouchableOpacity>
+            ),
+          }}
+        />
+      </Stack>
+    </QueryClientProvider>
   );
 }
