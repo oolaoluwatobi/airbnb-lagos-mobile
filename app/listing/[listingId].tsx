@@ -24,8 +24,10 @@ import { defaultStyles } from "@/constants/Styles";
 import { Listing } from "@/types/types";
 import { getListingById, getListings } from "@/actions/api";
 import { categories } from "@/components/ExploreHeader";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useUser } from "@clerk/clerk-expo";
+import { HeartButton } from "./components/HeartButton";
+import useFavorite from "../Hooks/useFavorite";
 
 const IMG_HEIGHT = 300;
 const { width } = Dimensions.get("window");
@@ -33,7 +35,6 @@ const { width } = Dimensions.get("window");
 const Page = () => {
   const { listingId } = useLocalSearchParams();
   const { user } = useUser();
-  console.log(listingId, user?.externalId!, "[listingId.tsx] 35");
 
   const navigation = useNavigation();
   const scrollRef = useAnimatedRef<Animated.ScrollView>();
@@ -43,13 +44,41 @@ const Page = () => {
     queryFn: () =>
       getListingById({
         listingId,
-        userId: user?.emailAddresses[0].emailAddress,
+        userEmail: user?.emailAddresses[0].emailAddress,
       }),
   });
 
+  const { hasFavorited, toggleFavorite } = useFavorite({
+    listingId: listingId as string,
+    currentUser: singleListingQuery.data?.currentUser,
+  });
+
+  const queryClient = useQueryClient();
+
+  const toggleFavoriteMutation = useMutation({
+    mutationFn: toggleFavorite,
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({
+        queryKey: ["listings", "singleListing"],
+      });
+    },
+  });
+
+  // if (onTheWishList) console.log("onTheWishList24heartbutton", onTheWishList);
+  // console.log("onTheWishList25heartbutton", onTheWishList);
+  // if (onWishList) console.log("onWishList", onWishList(listingId));
+
+  const add = () => {
+    toggleFavoriteMutation.mutate();
+  };
+
+  const remove = () => {
+    toggleFavoriteMutation.mutate();
+  };
+
   const scrollOffset = useScrollViewOffset(scrollRef);
 
-  const onWishList = singleListingQuery.data?.listing.user.favoriteIds.includes(
+  const onWishList = singleListingQuery.data?.currentUser.favoriteIds.includes(
     listingId as string
   );
 
@@ -57,12 +86,13 @@ const Page = () => {
   //   listingId as string
   // );
 
-  console.log(
-    listingId,
-    singleListingQuery.data?.listing.user.favoriteIds,
-    onWishList,
-    "[listingId.tsx] 46"
-  );
+  // console.log(
+  //   listingId,
+  //   singleListingQuery.data?.listing.user.favoriteIds,
+  //   onWishList,
+  //   "[listingId.tsx] 46"
+  // );
+
   const shareListing = async () => {
     try {
       await Share.share({
@@ -89,21 +119,20 @@ const Page = () => {
           <TouchableOpacity style={styles.roundButton} onPress={shareListing}>
             <Ionicons name="share-outline" size={22} color={"#000"} />
           </TouchableOpacity>
-          {onWishList ? (
-            <TouchableOpacity
-              style={styles.roundButton}
-              onPress={() => console.log("remove from wishlist")}
-            >
+          {hasFavorited ? (
+            <TouchableOpacity style={styles.roundButton} onPress={remove}>
               <Ionicons name="heart" size={22} color={Colors.primary} />
             </TouchableOpacity>
           ) : (
-            <TouchableOpacity
-              style={styles.roundButton}
-              onPress={() => console.log("add to wishlist")}
-            >
+            <TouchableOpacity style={styles.roundButton} onPress={add}>
               <Ionicons name="heart-outline" size={22} color={"#000"} />
             </TouchableOpacity>
           )}
+          <HeartButton
+            listingId={listingId as string}
+            currentUser={singleListingQuery.data?.currentUser}
+            inHeader
+          />
         </View>
       ),
       headerLeft: () => (
@@ -115,7 +144,7 @@ const Page = () => {
         </TouchableOpacity>
       ),
     });
-  }, []);
+  }, [onWishList, HeartButton]);
 
   const imageAnimatedStyle = useAnimatedStyle(() => {
     return {
@@ -152,7 +181,7 @@ const Page = () => {
   const getCategoryIcon = (params: string) => {
     if (singleListingQuery.data?.listing.category === params) {
       const icon = categories.find((item) => item.label === params);
-      console.log(icon, "[listingId.tsx] 127");
+      // console.log(icon, "[listingId.tsx] 127");
       return icon;
     }
   };
@@ -182,12 +211,11 @@ const Page = () => {
             {singleListingQuery.data?.listing.bathroomCount} bedrooms ·{" "}
             {singleListingQuery.data?.listing.bathroomCount} bathrooms
           </Text>
-          {/* <View style={{ flexDirection: "row", gap: 4 }}>
-            <Ionicons name="star" size={16} />
-            <Text style={styles.ratings}>
-              {singleListingQuery.data?.listing.category} · {singleListingQuery.data?.listing.price} reviews
-            </Text>
-          </View> */}
+          <HeartButton
+            listingId={listingId as string}
+            currentUser={singleListingQuery.data?.currentUser}
+            // inHeader
+          />
           <View style={styles.divider} />
 
           <View style={styles.hostView}>

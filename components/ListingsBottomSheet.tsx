@@ -23,8 +23,6 @@ export default function ListingsBottomSheet({
   const bottomSheetRef = useRef<BottomSheet>(null);
   const [refresh, setRefresh] = useState<number>(0);
 
-  console.log(listings, "LISTINGS______BOTTOM_SHEET");
-
   const onShowMap = () => {
     bottomSheetRef.current?.collapse();
     setRefresh(refresh + 1);

@@ -13,13 +13,16 @@ import { MouseEvent, useCallback, useMemo } from "react";
 interface IUserFavorite {
   listingId: string;
   currentUser?: User | null | undefined;
+  inHeader?: boolean;
 }
 
-const useFavorite = ({ listingId, currentUser }: IUserFavorite) => {
+const useFavorite = ({ listingId, currentUser, inHeader }: IUserFavorite) => {
   const router = useRouter();
 
+  // isInHeader
+
   const hasFavorited = useMemo(() => {
-    console.log(currentUser, "currentUser______useFavorite 23.tsx");
+    // console.log(currentUser, "currentUser______useFavorite 23.tsx");
     if (!currentUser) {
       return false;
     }
@@ -27,13 +30,10 @@ const useFavorite = ({ listingId, currentUser }: IUserFavorite) => {
     const list = currentUser.favoriteIds || [];
 
     return list.includes(listingId);
-  }, [currentUser, listingId]);
+  }, [currentUser?.favoriteIds, listingId]);
 
   const toggleFavorite = useCallback(async () => {
-    console.log(
-      currentUser,
-      "currentUser______useFavorite toggle__favorite 34.tsx"
-    );
+    // console.log( currentUser,"currentUser______useFavorite toggle__favorite 34.tsx");
 
     if (!currentUser) {
       return router.push("/login");
@@ -62,13 +62,18 @@ const useFavorite = ({ listingId, currentUser }: IUserFavorite) => {
         );
         // toast.success('added to favorites');
       }
-      router.navigate(".");
+      // router.navigate(".");
+      // if (inHeader) {
+      //   console.log("inHeader", listingId);
+      //   router.navigate(`listing/${listingId}`);
+      // } else {
+      //   console.log("!inHeader");
+      //   router.navigate(".");
+      // }
     } catch (error) {
       console.error(error);
       // toast.error("failed");
     }
-
-    router.navigate(".");
   }, [currentUser, hasFavorited, listingId, router]);
 
   return { hasFavorited, toggleFavorite };

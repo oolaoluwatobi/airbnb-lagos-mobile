@@ -35,7 +35,7 @@ const index = () => {
   };
 
   if (isLoaded === false) {
-    return <div>Loading...</div>;
+    return <Text>Loading...</Text>;
   }
 
   if (loading)

@@ -72,7 +72,11 @@ const Listings = ({ listings, category, refresh, currentUser }: Props) => {
               style={styles.image}
             />
 
-            <HeartButton listingId={item.id} currentUser={currentUser} />
+            <HeartButton
+              listingId={item.id}
+              currentUser={currentUser}
+              // onWishList={onWishList(item.id)}
+            />
 
             {/* {onWishList(item.id) ? (
               <>

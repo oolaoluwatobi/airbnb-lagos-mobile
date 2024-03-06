@@ -10,9 +10,9 @@ interface IListingsData {
 
 export async function getListings(userEmail?: string): Promise<IListingsData> {
   const response = await axios.get(`${API_URL}/listings?email=${userEmail}`);
-  console.log(response, "response");
   const data = await response.data;
-  console.log(data, "data_____listings____currentUser");
+  // console.log(response, "response");
+  // console.log(data, "data_____listings____currentUser");
   return data;
 }
 
@@ -23,18 +23,18 @@ interface SingleListingData {
 
 export async function getListingById({
   listingId,
-  userId,
+  userEmail,
 }: {
   listingId: string | string[] | undefined;
-  userId: string | undefined;
+  userEmail: string | undefined;
 }): Promise<SingleListingData> {
-  console.log(userId, "userId");
+  // console.log(userEmail, "userEmail");
   // const response = await fetch(`${API_URL}/listings`);
   const response = await axios.get(
-    `${API_URL}/listings/${listingId}?email=${userId}`
+    `${API_URL}/listings/${listingId}?email=${userEmail}`
   );
-  console.log(response, "response");
   const data = await response.data;
-  console.log(data, userId, "singlelistingdata");
+  // console.log(response, "response");
+  // console.log(data, userEmail, "singlelistingdata");
   return data;
 }
